@@ -245,9 +245,9 @@ export const useTerraform = ({ targetDir, synthCommand }: UseTerraformInput) => 
     return
   }
 
-  const execTerraformApply = async (plan: TerraformPlan) => {
+const execTerraformApply = async (plan: TerraformPlan, alwaysApply: boolean = false) => {
     try {
-      if (plan.needsApply) {
+      if (plan.needsApply || alwaysApply) {
         const resources: DeployingResource[] = plan.applyableResources.map((r: PlannedResource) => (Object.assign({}, r, { applyState: DeployingResourceApplyState.WAITING })))
         dispatch({ type: 'DEPLOY', resources })
 
@@ -330,11 +330,11 @@ export const useTerraform = ({ targetDir, synthCommand }: UseTerraformInput) => 
     return state
   }
 
-  const deploy = (plan?: TerraformPlan) => {
+  const deploy = (plan?: TerraformPlan, alwaysApply: boolean = false) => {
     React.useEffect(() => {
       const invoke = async () => {
         if (plan) {
-          await execTerraformApply(plan)
+          await execTerraformApply(plan, alwaysApply)
         } else {
           throw new Error("expected plan to be present but was undefined")
         }

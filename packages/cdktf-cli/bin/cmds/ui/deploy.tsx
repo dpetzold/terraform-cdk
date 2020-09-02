@@ -88,14 +88,15 @@ const Confirm = ({ callback }: ConfirmConfig): React.ReactElement => {
 }
 
 interface ApplyConfig {
-  deploy: (plan: TerraformPlan | undefined) => any;
+  deploy: (plan: TerraformPlan | undefined, alwaysApply: boolean) => any;
+  alwaysApply: boolean;
 }
 
-export const Apply = ({ deploy }: ApplyConfig): React.ReactElement => {
+export const Apply = ({ deploy, alwaysApply }: ApplyConfig): React.ReactElement => {
   const { resources, status, stackName, output, plan } = useTerraformState()
   const applyActions = [PlannedResourceAction.UPDATE, PlannedResourceAction.CREATE, PlannedResourceAction.DELETE, PlannedResourceAction.READ];
   const applyableResources = resources.filter(resource => (applyActions.includes(resource.action)));
-  deploy(plan)
+  deploy(plan, alwaysApply)
   return (
     <Fragment>
       <Box flexDirection="column">
@@ -129,9 +130,10 @@ interface DeployConfig {
   targetDir: string;
   synthCommand: string;
   autoApprove: boolean;
+  alwaysApply: boolean;
 }
 
-export const Deploy = ({ targetDir, synthCommand, autoApprove }: DeployConfig): React.ReactElement => {
+export const Deploy = ({ targetDir, synthCommand, autoApprove, alwaysApply }: DeployConfig): React.ReactElement => {
   const { plan: execPlan, deploy } = useTerraform({ targetDir, synthCommand })
   const { status, stackName, errors, plan } = execPlan()
 
@@ -140,10 +142,10 @@ export const Deploy = ({ targetDir, synthCommand, autoApprove }: DeployConfig): 
   const statusText = (stackName === '') ? `${status}...` : <Text>{status}<Text bold>&nbsp;{stackName}</Text>...</Text>
 
   const [shouldContinue, confirmDeployment] = useState<boolean>(autoApprove);
-
+  const [continueNoChanges] = useState<boolean>(alwaysApply);
 
   if (errors) return (<Box>{errors.map((e: any) => e.message)}</Box>);
-  if (plan && !plan.needsApply) return (<><Text>No changes for Stack: <Text bold>{stackName}</Text></Text></>);
+  if ((plan && !plan.needsApply) && !continueNoChanges) return (<><Text>No changes for Stack: <Text bold>{stackName}</Text></Text></>);
 
   return (
     <Box>
@@ -154,7 +156,7 @@ export const Deploy = ({ targetDir, synthCommand, autoApprove }: DeployConfig): 
       ) : (
           <>
             {!shouldContinue && <Box flexDirection="column"><Plan /><Confirm callback={confirmDeployment} /></Box>}
-            {shouldContinue && <Apply deploy={deploy} />}
+            {shouldContinue && <Apply deploy={deploy} alwaysApply={alwaysApply} />}
           </>
         )
 

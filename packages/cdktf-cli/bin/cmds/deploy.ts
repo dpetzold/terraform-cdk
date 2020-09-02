@@ -15,6 +15,7 @@ class Command implements yargs.CommandModule {
     .option('app', { default: config.app, required: true, desc: 'Command to use in order to execute cdktf app', alias: 'a' })
     .option('output', { default: config.output, required: true, desc: 'Output directory', alias: 'o' })
     .option('auto-approve', { type: 'boolean', default: false, required: false, desc: 'Auto approve' })
+    .option('always-apply', { type: 'boolean', default: false, required: false, desc: 'Always apply' })
     .showHelpOnFail(true)
 
   public async handler(argv: any) {
@@ -22,8 +23,9 @@ class Command implements yargs.CommandModule {
     const command = argv.app;
     const outdir = argv.output;
     const autoApprove = argv.autoApprove;
+    const alwaysApply = argv.alwaysApply;
 
-    await renderInk(React.createElement(Deploy, { targetDir: outdir, synthCommand: command, autoApprove }))
+    await renderInk(React.createElement(Deploy, { targetDir: outdir, synthCommand: command, autoApprove, alwaysApply }))
   }
 }
 
